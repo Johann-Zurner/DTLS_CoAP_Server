@@ -1,0 +1,18 @@
+[ req ]
+default_bits = 256
+default_md = sha256
+prompt = no
+distinguished_name = req_distinguished_name
+req_extensions = v3_server_cert 
+
+[ req_distinguished_name ]
+C = DE
+ST = NRW
+L = Rheinbach
+O = JZGmBH
+CN = Thesis_Server-Cert
+
+[ v3_server_cert ]
+basicConstraints = CA:FALSE
+keyUsage = digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth
