@@ -28,3 +28,9 @@ sudo apt install autoconf automake libtool
 CFLAGS=-DWOLFSSL_STATIC_PSK ./configure --enable-debug --enable-dtls --enable-dtls13 --enable-dtlscid --enable-opensslextra --enable-psk
 make
 sudo make install
+```
+to compile the code run (your paths might differ):
+```bash
+gcc server-dtls-coap.c -o server-dtls-coap -I /usr/local/include -L/usr/local/lib -Wl,-rpath=/usr/local/lib -lwolfssl -lcoap3
+
+```
