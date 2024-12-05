@@ -10,7 +10,7 @@
 #include <coap3/coap_pdu.h>
 
 #define USE_CID //Comment out to disable the use of Connection ID
-#define CERTS //Comment out to use Pre-Shared Keys instead of Certficate Verfication
+//#define CERTS //Comment out to use Pre-Shared Keys instead of Certficate Verfication
 //#define USE_DTLS_1_3 //Comment out to use DTLS 1.2 instead of 1.3
 #define SHOW_WOLFSSL_DEBUG //Comment out to remove timestamps from debug logs
 
@@ -126,7 +126,7 @@ int main()
 #else
     wolfSSL_CTX_use_psk_identity_hint(ctx, PSK_IDENTITY);
     wolfSSL_CTX_set_psk_server_callback(ctx, my_psk_server_callback);
-//    wolfSSL_CTX_set_cipher_list(ctx, "ECDHE-PSK-CHACHA20-POLY1305");
+    //wolfSSL_CTX_set_cipher_list(ctx, "PSK-AES128-GCM-SHA256"); //Force specific ciphers
 #endif
 
     ssl = wolfSSL_new(ctx);
