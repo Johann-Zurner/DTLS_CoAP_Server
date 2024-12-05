@@ -9,10 +9,10 @@
 #include <coap3/coap.h>
 #include <coap3/coap_pdu.h>
 
-#define USE_CID //Comment out to disable the use of Connection ID
-//#define CERTS //Comment out to use Pre-Shared Keys instead of Certficate Verfication
-//#define USE_DTLS_1_3 //Comment out to use DTLS 1.2 instead of 1.3
-#define SHOW_WOLFSSL_DEBUG //Comment out to remove timestamps from debug logs
+#define USE_CID // Comment out to disable the use of Connection ID
+// #define CERTS //Comment out to use Pre-Shared Keys instead of Certficate Verfication
+// #define USE_DTLS_1_3 //Comment out to use DTLS 1.2 instead of 1.3
+#define SHOW_WOLFSSL_DEBUG // Comment out to remove timestamps from debug logs
 
 #define COAP_MAX_PDU_SIZE 128
 #define PSK_IDENTITY "Client_identity"
@@ -37,8 +37,8 @@
 #define ROOT_CA_DIRECTORY BASE_PATH "certs/rootCAs/rootCerts"
 #define CID_SIZE 2
 
-unsigned int my_psk_server_callback(WOLFSSL* ssl, const char* identity,
-                              unsigned char* key, unsigned int key_max_len);
+unsigned int my_psk_server_callback(WOLFSSL *ssl, const char *identity,
+                                    unsigned char *key, unsigned int key_max_len);
 
 void CustomLoggingCallback(const int logLevel, const char *const logMessage);
 
@@ -126,7 +126,7 @@ int main()
 #else
     wolfSSL_CTX_use_psk_identity_hint(ctx, PSK_IDENTITY);
     wolfSSL_CTX_set_psk_server_callback(ctx, my_psk_server_callback);
-    //wolfSSL_CTX_set_cipher_list(ctx, "PSK-AES128-GCM-SHA256"); //Force specific ciphers
+    // wolfSSL_CTX_set_cipher_list(ctx, "PSK-AES128-GCM-SHA256"); //Force specific ciphers
 #endif
 
     ssl = wolfSSL_new(ctx);
@@ -185,7 +185,7 @@ int main()
                     printf(GREEN "%02X" RESET, extractedCID[i]);
                 }
                 printf("\n");
-		PRINTF("\n");
+                PRINTF("\n");
                 unsigned char storedCID[CID_SIZE];
                 wolfSSL_dtls_cid_get_rx(ssl, storedCID, sizeof(storedCID));
                 PRINTF(GREEN "Stored CID: " RESET);
@@ -194,7 +194,7 @@ int main()
                     printf(GREEN "%02X" RESET, storedCID[i]);
                 }
                 printf("\n");
-   		PRINTF("\n");
+                PRINTF("\n");
                 if (memcmp(extractedCID, storedCID, CID_SIZE) == 0)
                 {
                     PRINTF(GREEN "Extracted CID from received Packet and stored CID are equal" RESET "\n");
@@ -217,6 +217,15 @@ int main()
         }
         PRINTF(GREEN "Reading packet with wolfssl_read..." RESET "\n");
         ret = wolfSSL_read(ssl, buffer, sizeof(buffer) - 1);
+        if (ret != WOLFSSL_SUCCESS)
+        {
+            err = wolfSSL_get_error(ssl, ret);
+            if (err == WOLFSSL_ERROR_ZERO_RETURN) {
+                PRINTF(GREEN "Got close notify; closing session..." RESET"\n");
+                goto cleanup;
+            }
+
+        }
         if ((buffer[0] & 0xC0) != 0x40)
         {
             PRINTF("Invalid CoAP version or type\n");
@@ -274,7 +283,7 @@ int main()
                 printf("%02X ", token[i]); // Print each byte in hexadecimal
             }
             printf("\n");
-	    PRINTF("\n");
+            PRINTF("\n");
         }
         // Check if it’s a confirmable message (COAP_MESSAGE_CON)
         if (coap_pdu_get_type(received_pdu) == COAP_MESSAGE_CON)
@@ -301,7 +310,7 @@ int main()
                 printf("%02X ", ack_buffer[i]); // Print each byte in hexadecimal
             }
             printf("\n");
-	    PRINTF("\n");
+            PRINTF("\n");
             // Total length of the acknowledgment
             size_t total_len = offset;
 
@@ -364,7 +373,8 @@ cleanup:
     return 0;
 }
 
-void CustomLoggingCallback(const int logLevel, const char *const logMessage) {
+void CustomLoggingCallback(const int logLevel, const char *const logMessage)
+{
     struct timeval tv;
     struct tm *timeinfo;
 
@@ -377,7 +387,8 @@ void CustomLoggingCallback(const int logLevel, const char *const logMessage) {
             timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec, tv.tv_usec, logMessage);
 }
 
-void printf_with_timestamp(const char *format, ...) {
+void printf_with_timestamp(const char *format, ...)
+{
     struct timeval tv;
     struct tm *timeinfo;
 
@@ -395,17 +406,21 @@ void printf_with_timestamp(const char *format, ...) {
     va_end(args);
 }
 
-unsigned int my_psk_server_callback(WOLFSSL* ssl, const char* identity,
-                              unsigned char* key, unsigned int key_max_len) {
+unsigned int my_psk_server_callback(WOLFSSL *ssl, const char *identity,
+                                    unsigned char *key, unsigned int key_max_len)
+{
     memcpy(key, PSK_KEY, PSK_KEY_LEN);
     return PSK_KEY_LEN;
 }
 
-void show_supported_ciphers() {
+void show_supported_ciphers()
+{
     uint8_t cipher_buffer[2048];
-    wolfSSL_get_ciphers(cipher_buffer,BUFFER_SIZE);
-    for (char *p = (char *)cipher_buffer; *p; p++) {
-        if (*p == ':') {
+    wolfSSL_get_ciphers(cipher_buffer, BUFFER_SIZE);
+    for (char *p = (char *)cipher_buffer; *p; p++)
+    {
+        if (*p == ':')
+        {
             *p = '\n';
         }
     }
