@@ -26,7 +26,7 @@ endif
 
 :Accept DTLS handshake;
 if (Handshake successful?) then (yes)
-    :Store IP and port;
+    :Store client IP and port;
     repeat
         label receivepacket
         :Receive encrypted packet;
