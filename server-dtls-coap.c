@@ -9,9 +9,9 @@
 #include <coap3/coap.h>
 #include <coap3/coap_pdu.h>
 
-#define USE_CID // Comment out to disable the use of Connection ID
-// #define CERTS //Comment out to use Pre-Shared Keys instead of Certficate Verfication
-// #define USE_DTLS_1_3 //Comment out to use DTLS 1.2 instead of 1.3
+//#define USE_CID // Comment out to disable the use of Connection ID
+#define CERTS //Comment out to use Pre-Shared Keys instead of Certficate Verfication
+#define USE_DTLS_1_3 //Comment out to use DTLS 1.2 instead of 1.3
 #define SHOW_WOLFSSL_DEBUG // Comment out to remove timestamps from debug logs
 
 #define COAP_MAX_PDU_SIZE 128
@@ -126,8 +126,8 @@ int main()
 #else
     wolfSSL_CTX_use_psk_identity_hint(ctx, PSK_IDENTITY);
     wolfSSL_CTX_set_psk_server_callback(ctx, my_psk_server_callback);
-    // wolfSSL_CTX_set_cipher_list(ctx, "PSK-AES128-GCM-SHA256"); //Force specific ciphers
 #endif
+    // wolfSSL_CTX_set_cipher_list(ctx, "PSK-AES128-GCM-SHA256"); //Force specific ciphers
 
     ssl = wolfSSL_new(ctx);
 
@@ -294,7 +294,7 @@ int main()
 
             // Step 1: Set CoAP header
             ack_buffer[offset++] = 0x60 | (token_len & 0x0F); // Version = 1 (0b01), Type = ACK (0b10), Token length = 0
-            ack_buffer[offset++] = 0;                         // Code = 0.00 (Empty message)
+            ack_buffer[offset++] = 0x44;                         // Code = 2.04 (Success changed)
             ack_buffer[offset++] = (message_id >> 8) & 0xFF;  // Message ID (high byte)
             ack_buffer[offset++] = message_id & 0xFF;         // Message ID (low byte)
 
