@@ -7,7 +7,8 @@ This project provides a CoAP server setup for testing **DTLS Connection ID (CID)
 ## Requirements
 
 - **libcoap** must be installed
-- **Autotools** for building
+- **Autotools** for building (sudo apt install autoconf automake libtool)
+
 
 ---
 
@@ -24,7 +25,6 @@ git config user.email "anonymous@example.com"
 git config user.name "Anonymous"
 git merge julek/dtls-server-demux
 sudo apt update
-sudo apt install autoconf automake libtool
 
 ./autogen.sh
 CFLAGS=-DWOLFSSL_STATIC_PSK ./configure --enable-debug --enable-dtls --enable-dtls13 --enable-dtlscid --enable-opensslextra --enable-psk
