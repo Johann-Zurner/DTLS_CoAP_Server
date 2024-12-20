@@ -20,6 +20,8 @@ cd wolfssl
 git remote add julek https://github.com/julek-wolfssl/wolfssl.git
 git fetch julek dtls-server-demux
 git checkout master
+git config user.email "anonymous@example.com"
+git config user.name "Anonymous"
 git merge julek/dtls-server-demux
 sudo apt update
 sudo apt install autoconf automake libtool
