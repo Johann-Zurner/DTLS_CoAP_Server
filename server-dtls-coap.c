@@ -177,8 +177,7 @@ int main()
                 PRINTF(GREEN "IP or port has changed! Checking ConnectionID" RESET "\n");
                 strcpy(client_ip, client_ip_new);
                 client_port = client_port_new;
-                const unsigned char *extractedCID = NULL;
-                wolfSSL_dtls_cid_parse((unsigned char *)buffer, receivedSize, &extractedCID, sizeof(connectionID));
+                const unsigned char *extractedCID = wolfSSL_dtls_cid_parse((unsigned char *)buffer, receivedSize, sizeof(connectionID));
                 PRINTF(GREEN "Extracted CID: " RESET);
                 for (unsigned int i = 0; i < sizeof(connectionID); i++)
                 {
