@@ -29,12 +29,11 @@
 #define RESET "\033[0m"
 #endif
 
-#define BASE_PATH "/root/wolfssl/bin/server/"
 #define SERVER_PORT 2444
 #define BUFFER_SIZE 1024
-#define SERVER_KEY BASE_PATH "certs/serverCert/key/server-ec-key.pem"
-#define SERVER_CERT BASE_PATH "certs/serverCert/cert/server-cert-ce.pem"
-#define ROOT_CA_DIRECTORY BASE_PATH "certs/rootCAs/rootCerts"
+#define SERVER_KEY "certs/serverCert/key/server-ec-key.pem"
+#define SERVER_CERT "certs/serverCert/cert/server-cert-ce.pem"
+#define ROOT_CA_DIRECTORY "certs/rootCAs/rootCerts"
 #define CID_SIZE 2
 
 unsigned int my_psk_server_callback(WOLFSSL *ssl, const char *identity,
