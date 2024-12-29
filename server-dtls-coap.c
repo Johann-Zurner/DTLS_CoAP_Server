@@ -210,7 +210,7 @@ int main()
         else if (strcmp(client_ip, client_ip_new) != 0 || client_port != client_port_new)
         {
             // CID is not enabled and IP/Port mismatch
-            PRINTF(RED "IP or port has changed without CID. Terminating session." RESET "\n");
+            PRINTF(RED "IP or port has changed without CID. Resetting session." RESET "\n");
             goto reset_session; // Go to reset session logic
         }
         PRINTF(GREEN "Reading packet with wolfssl_read..." RESET "\n");
@@ -244,6 +244,7 @@ int main()
         }
         printf("\n");
         PRINTF("\n");
+        //Parse received CoAP message into usable structure
         coap_pdu_t *received_pdu = coap_pdu_init(0, 0, 0, COAP_MAX_PDU_SIZE);
         if (coap_pdu_parse(COAP_PROTO_UDP, (const uint8_t *)buffer, ret, received_pdu) == 0)
         {
@@ -267,8 +268,8 @@ int main()
         coap_mid_t message_id = coap_pdu_get_mid(received_pdu);
         PRINTF(GREEN "MID: %u" RESET "\n", message_id);
 
-        const coap_bin_const_t token_data = coap_pdu_get_token(received_pdu);
-        const uint8_t *token = token_data.s;  // Pointer to the token bytes
+        coap_bin_const_t token_data = coap_pdu_get_token(received_pdu);
+        uint8_t *token = token_data.s;  // Pointer to the token bytes
         size_t token_len = token_data.length; // Length of the token
 
         // Print the token
