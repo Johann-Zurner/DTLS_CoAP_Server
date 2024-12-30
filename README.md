@@ -18,16 +18,8 @@ This project provides a CoAP server setup for testing **DTLS Connection ID (CID)
 ```bash
 git clone https://github.com/wolfSSL/wolfssl.git
 cd wolfssl
-git remote add julek https://github.com/julek-wolfssl/wolfssl.git
-git fetch julek dtls-server-demux
-git checkout master
-git config user.email "anonymous@example.com"
-git config user.name "Anonymous"
-git merge julek/dtls-server-demux
-sudo apt update
-
 ./autogen.sh
-CFLAGS=-DWOLFSSL_STATIC_PSK ./configure --enable-debug --enable-dtls --enable-dtls13 --enable-dtlscid --enable-opensslextra --enable-psk
+./configure --enable-debug --enable-dtls --enable-dtls13 --enable-dtlscid --enable-opensslextra --enable-psk --enable-rpk --enable-curve25519 && make && make install
 make
 sudo make install
 ```
