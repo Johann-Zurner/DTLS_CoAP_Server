@@ -19,9 +19,9 @@ This project provides a CoAP server setup for testing **DTLS Connection ID (CID)
 git clone https://github.com/wolfSSL/wolfssl.git
 cd wolfssl
 ./autogen.sh
-./configure --enable-debug --enable-dtls --enable-dtls13 --enable-dtlscid --enable-opensslextra --enable-psk --enable-rpk --enable-curve25519 && make && make install
+./configure --enable-debug --enable-dtls --enable-dtls13 --enable-dtlscid --enable-opensslextra --enable-psk --enable-rpk --enable-curve25519
 make
-sudo make install
+make install
 ```
 to compile the code run (your paths might differ):
 ```bash
