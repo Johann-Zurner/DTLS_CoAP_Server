@@ -11,7 +11,7 @@
 
 //#define USE_CID // Comment out to disable the use of Connection ID
 #define CERTS //Comment out to use Pre-Shared Keys instead of Certficate Verfication
-#define USE_DTLS_1_3 //Comment out to use DTLS 1.2 instead of 1.3
+//#define USE_DTLS_1_3 //Comment out to use DTLS 1.2 instead of 1.3
 #define SHOW_WOLFSSL_DEBUG // Comment out to remove timestamps from debug logs
 
 #define COAP_MAX_PDU_SIZE 128
@@ -41,10 +41,11 @@ unsigned int my_psk_server_callback(WOLFSSL *ssl, const char *identity,
 
 void CustomLoggingCallback(const int logLevel, const char *const logMessage);
 
-void printf_with_timestamp(const char *format, ...);
+void printf_with_timestamp(const char *format, ...);//Use PRINTF instead of printf to show timestamps
 
 void cert_setup(WOLFSSL_CTX *ctx);
 void show_supported_ciphers();
+void change_proxyIP();
 
 int main()
 {
@@ -139,7 +140,8 @@ int main()
 
     wolfSSL_dtls_set_peer(ssl, &clientAddr, clientAddrLen);
     wolfSSL_set_fd(ssl, sockfd);
-    wolfSSL_dtls_set_timeout_init(ssl, 10);
+
+    wolfSSL_dtls_set_timeout_init(ssl, 20);
     ret = wolfSSL_accept(ssl);
     if (ret == WOLFSSL_SUCCESS)
     {
@@ -153,6 +155,7 @@ int main()
         PRINTF(RED "Error during wolfSSL_read: %d" RESET "\n", err);
         goto cleanup;
     }
+    int coap_counter = 0; //counts coap rounds
 
     while (1)
     {
@@ -242,7 +245,6 @@ int main()
         {
             printf("%02X ", (unsigned char)buffer[i]);
         }
-        printf("\n");
         PRINTF("\n");
         //Parse received CoAP message into usable structure
         coap_pdu_t *received_pdu = coap_pdu_init(0, 0, 0, COAP_MAX_PDU_SIZE);
@@ -287,7 +289,7 @@ int main()
         // Check if it’s a confirmable message (COAP_MESSAGE_CON)
         if (coap_pdu_get_type(received_pdu) == COAP_MESSAGE_CON)
         {
-            PRINTF(GREEN "It's a confirmable COP message" RESET "\n");
+            PRINTF(GREEN "It's a confirmable CoAP message" RESET "\n");
             uint8_t ack_buffer[COAP_MAX_PDU_SIZE]; // Buffer for constructing the acknowledgment
             size_t offset = 0;                     // Offset for constructing the buffer
 
@@ -329,19 +331,15 @@ int main()
             PRINTF("Received non-confirmable or other CoAP message\n");
         }
         coap_delete_pdu(received_pdu);
+        if (++coap_counter >= 3) {
+	    change_proxyIP();
+            coap_counter = 0;
+	}
         continue;
 
     reset_session:
         PRINTF(RED "Resetting DTLS session for new handshake." RESET "\n");
-        // wolfSSL_shutdown(ssl);
         wolfSSL_free(ssl);
-        // ssize_t receivedSize = recvfrom(sockfd, buffer, sizeof(buffer), MSG_PEEK, clientAddr_in, &clientAddrLen);
-        PRINTF("Buffer contents: ");
-        for (int i = 0; i < receivedSize; i++)
-        {
-            printf("%02X ", (unsigned char)buffer[i]);
-        }
-        printf("\n");
         ssl = wolfSSL_new(ctx);
         wolfSSL_dtls_set_peer(ssl, clientAddr_in, clientAddrLen);
         wolfSSL_set_fd(ssl, sockfd);
@@ -424,4 +422,15 @@ void show_supported_ciphers()
         }
     }
     printf("Enabled Ciphers:\n%s\n", cipher_buffer);
+}
+
+void change_proxyIP(){
+    const char *command = "ssh DTLSproxy.local './change_ip.sh' > /dev/null 2>&1";
+    int ret = system(command);
+    if (ret == 0 || ret == 256) {
+        PRINTF(GREEN "successfully changed proxy IP.\n" RESET);
+    } else {
+        PRINTF(RED "proxy IP change didnt work; return code: %d\n" RESET, ret);
+    }
+    return;
 }

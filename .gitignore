@@ -1,2 +1,4 @@
 certs/rootCAs/keys/
 server-dtls-coap
+dtls_traffic.pcap
+proxy.pem
