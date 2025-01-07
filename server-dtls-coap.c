@@ -271,7 +271,7 @@ int main()
         PRINTF(GREEN "MID: %u" RESET "\n", message_id);
 
         coap_bin_const_t token_data = coap_pdu_get_token(received_pdu);
-        uint8_t *token = token_data.s;  // Pointer to the token bytes
+        const uint8_t *token = token_data.s;  // Pointer to the token bytes
         size_t token_len = token_data.length; // Length of the token
 
         // Print the token
