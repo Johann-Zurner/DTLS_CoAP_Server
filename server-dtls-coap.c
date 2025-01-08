@@ -11,7 +11,7 @@
 
 //#define USE_CID // Comment out to disable the use of Connection ID
 #define CERTS //Comment out to use Pre-Shared Keys instead of Certficate Verfication
-//#define USE_DTLS_1_3 //Comment out to use DTLS 1.2 instead of 1.3
+#define USE_DTLS_1_3 //Comment out to use DTLS 1.2 instead of 1.3
 #define SHOW_WOLFSSL_DEBUG // Comment out to remove timestamps from debug logs
 
 #define COAP_MAX_PDU_SIZE 128
@@ -141,7 +141,7 @@ int main()
     wolfSSL_dtls_set_peer(ssl, &clientAddr, clientAddrLen);
     wolfSSL_set_fd(ssl, sockfd);
 
-    wolfSSL_dtls_set_timeout_init(ssl, 20);
+    wolfSSL_dtls_set_timeout_init(ssl, 10);
     ret = wolfSSL_accept(ssl);
     if (ret == WOLFSSL_SUCCESS)
     {

@@ -1,0 +1,29 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Build UDP Server", // Task name
+        "type": "shell",
+        "command": "gcc",
+        "args": [
+          "server-dtls-coap.c",
+          "-o",
+          "server-dtls-coap",
+          "-I",
+          "/usr/local/include",
+          "-L",
+          "/usr/local/lib",
+          "-Wl,-rpath=/usr/local/lib",
+          "-lwolfssl",
+          "-lcoap-3"
+        ],
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        },
+        "problemMatcher": [],
+        "detail": "Build the UDP server using gcc."
+      }
+    ]
+  }
+  
