@@ -2,13 +2,11 @@
 
 # Function to stop processes and process the pcap file
 cleanup() {
-
     if [[ -n "$TCPDUMP_PID" ]] && ps -p $TCPDUMP_PID > /dev/null 2>&1; then
         echo "Stopping tcpdump..."
         kill $TCPDUMP_PID 2>/dev/null
         wait $TCPDUMP_PID 2>/dev/null || true  # Ensure tcpdump has fully stopped
     fi
-
     exit 0
 }
 

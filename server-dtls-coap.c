@@ -10,8 +10,8 @@
 #include <coap3/coap_pdu.h>
 
 //#define USE_CID // Comment out to disable the use of Connection ID
-#define CERTS //Comment out to use Pre-Shared Keys instead of Certficate Verfication
-#define USE_DTLS_1_3 //Comment out to use DTLS 1.2 instead of 1.3
+//#define CERTS //Comment out to use Pre-Shared Keys instead of Certficate Verfication
+//#define USE_DTLS_1_3 //Comment out to use DTLS 1.2 instead of 1.3
 #define SHOW_WOLFSSL_DEBUG // Comment out to remove timestamps from debug logs
 
 #define COAP_MAX_PDU_SIZE 128
