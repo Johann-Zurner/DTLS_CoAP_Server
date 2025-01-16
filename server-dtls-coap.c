@@ -2,7 +2,7 @@
  * Date: January 16, 2025
  * Purpose: Part of a Bachelor's thesis project at Hochschule Bonn-Rhein-Sieg (HBRS) for testing Connection ID in DTLS
  * works together with a proxy that's placed in front of server and that can change a packets source IP
- * 
+ *
  * DTLS Server with CoAP and Connection ID
  * ----------------------------------
  * This program implements a DTLS server using WolfSSL that communicates with clients via the CoAP protocol. It includes
@@ -207,14 +207,14 @@ int main()
             PRINTF(GREEN "Socket waiting for packet... " RESET "\n");
             continue;
         }
-        //check IP-adress and port of each incoming packet
+        // check IP-adress and port of each incoming packet
         strcpy(client_ip_new, inet_ntoa(((struct sockaddr_in *)clientAddr_in)->sin_addr));
         client_port_new = ntohs(((struct sockaddr_in *)clientAddr_in)->sin_port);
         PRINTF(GREEN "client_ip: %s; client_ip_new: %s" RESET "\n", client_ip, client_ip_new);
         PRINTF(GREEN "client_port: %u; client_port_new: %u" RESET "\n", client_port, client_port_new);
         if (wolfSSL_dtls_cid_is_enabled(ssl) == WOLFSSL_SUCCESS)
         {
-            //if port or IP has changed, check CID and compare with stored CID
+            // if port or IP has changed, check CID and compare with stored CID
             if (strcmp(client_ip, client_ip_new) != 0 || client_port != client_port_new)
             {
                 PRINTF(GREEN "IP or port has changed! Checking ConnectionID" RESET "\n");
@@ -237,7 +237,7 @@ int main()
                 printf("\n");
                 PRINTF("\n");
                 if (memcmp(extractedCID, storedCID, CID_SIZE) == 0)
-                //inject packet into DTLS session if the two CIDs are equal
+                // inject packet into DTLS session if the two CIDs are equal
                 {
                     PRINTF(GREEN "Extracted CID from received Packet and stored CID are equal" RESET "\n");
                     wolfSSL_inject(ssl, buffer, receivedSize);
@@ -330,7 +330,7 @@ int main()
         // Check if it’s a confirmable message (COAP_MESSAGE_CON)
         if (coap_pdu_get_type(received_pdu) == COAP_MESSAGE_CON)
         {
-            //construct CoAP message (can't use libcoap for that because of lack of CID handling)
+            // construct CoAP message (can't use libcoap for that because of lack of CID handling)
             PRINTF(GREEN "It's a confirmable CoAP message" RESET "\n");
             uint8_t ack_buffer[COAP_MAX_PDU_SIZE]; // Buffer for constructing the acknowledgment
             size_t offset = 0;                     // Offset for constructing the buffer
@@ -413,7 +413,7 @@ cleanup:
     return 0;
 }
 
-//used for adding timestamps to debug logs
+// used for adding timestamps to debug logs
 void CustomLoggingCallback(const int logLevel, const char *const logMessage)
 {
     struct timeval tv;
@@ -467,7 +467,7 @@ void show_supported_ciphers()
     }
     printf("Enabled Ciphers:\n%s\n", cipher_buffer);
 }
-//executes remote change_ip script on proxy
+// executes remote change_ip script on proxy
 void change_proxyIP()
 {
     const char *command = "ssh DTLSproxy.local './change_ip.sh' > /dev/null 2>&1";
