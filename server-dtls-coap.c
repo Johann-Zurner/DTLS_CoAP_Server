@@ -1,3 +1,40 @@
+/* Author: Johann Zürner
+ * Date: January 16, 2025
+ * Purpose: Part of a Bachelor's thesis project at Hochschule Bonn-Rhein-Sieg (HBRS) for testing Connection ID in DTLS
+ * works together with a proxy that's placed in front of server and that can change a packets source IP
+ * 
+ * DTLS Server with CoAP and Connection ID
+ * ----------------------------------
+ * This program implements a DTLS server using WolfSSL that communicates with clients via the CoAP protocol. It includes
+ * features like Connection ID (CID), certificate-based or PSK authentication, and CoAP message handling.
+ *
+ * Key Features:
+ * 1. **DTLS Server Functionality:**
+ *    - Supports DTLS 1.2 and DTLS 1.3 (selectable via preprocessor macros).
+ *    - Connection ID (CID) support for session continuity despite IP or port changes.
+ *
+ * 2. **CoAP Message Processing:**
+ *    - Parses incoming CoAP messages, including payload and tokens.
+ *    - Sends CoAP acknowledgments for confirmable messages.
+ *    - Demonstrates handling CoAP request-response cycles.
+ *
+ * 3. **Authentication Options:**
+ *    - Certificate-based verification for secure communication.
+ *    - Pre-Shared Key (PSK) authentication for simpler setups.
+ *
+ * 4. **Dynamic Proxy IP Management:**
+ *    - Includes functionality to change the proxy IP via a remote shell command to simulate client IP changes.
+ *
+ * Usage:
+ * - Compile with WolfSSL and CoAP libraries.
+ * - Configure the preprocessor macros (`USE_CID`, `CERTS`, `USE_DTLS_1_3`, etc.) to enable desired features.
+ * - Ensure the certificate and key file paths are correct when using certificate-based authentication.
+ *
+ * Notes:
+ * - The program requires the LibCoAP library
+ * - Debugging logs are enabled by default; disable them by commenting out `SHOW_WOLFSSL_DEBUG`.
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include <netinet/in.h>
@@ -9,9 +46,9 @@
 #include <coap3/coap.h>
 #include <coap3/coap_pdu.h>
 
-//#define USE_CID // Comment out to disable the use of Connection ID
-//#define CERTS //Comment out to use Pre-Shared Keys instead of Certficate Verfication
-//#define USE_DTLS_1_3 //Comment out to use DTLS 1.2 instead of 1.3
+// #define USE_CID // Comment out to disable the use of Connection ID
+#define CERTS // Comment out to use Pre-Shared Keys instead of Certficate Verfication
+// #define USE_DTLS_1_3 //Comment out to use DTLS 1.2 instead of 1.3
 #define SHOW_WOLFSSL_DEBUG // Comment out to remove timestamps from debug logs
 
 #define COAP_MAX_PDU_SIZE 128
@@ -19,6 +56,7 @@
 #define PSK_KEY "\xdd\xbb\xba\x39\xda\xce\x95\xed\x12\x34\x56\x78\x90\xab\xcd\xef"
 #define PSK_KEY_LEN 16
 
+// to colorize debug output
 #ifdef NO_COLORS
 #define GREEN ""
 #define RED ""
@@ -29,11 +67,13 @@
 #define RESET "\033[0m"
 #endif
 
+// set server port
 #define SERVER_PORT 2444
 #define BUFFER_SIZE 1024
 #define SERVER_KEY "certs/serverCert/key/server-ec-key.pem"
 #define SERVER_CERT "certs/serverCert/cert/server-cert-ce.pem"
 #define ROOT_CA_DIRECTORY "certs/rootCAs/rootCerts"
+// Connection ID size maximum 2 Bytes in WolfSSL
 #define CID_SIZE 2
 
 unsigned int my_psk_server_callback(WOLFSSL *ssl, const char *identity,
@@ -41,7 +81,7 @@ unsigned int my_psk_server_callback(WOLFSSL *ssl, const char *identity,
 
 void CustomLoggingCallback(const int logLevel, const char *const logMessage);
 
-void printf_with_timestamp(const char *format, ...);//Use PRINTF instead of printf to show timestamps
+void printf_with_timestamp(const char *format, ...); // Use PRINTF instead of printf to show debug timestamps
 
 void cert_setup(WOLFSSL_CTX *ctx);
 void show_supported_ciphers();
@@ -66,7 +106,7 @@ int main()
 #else
     WOLFSSL_METHOD *method = wolfDTLSv1_2_server_method();
 #endif
-
+    // setup socket
     sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     memset(&servAddr, 0, sizeof(servAddr));
     servAddr.sin_family = AF_INET;
@@ -155,7 +195,7 @@ int main()
         PRINTF(RED "Error during wolfSSL_read: %d" RESET "\n", err);
         goto cleanup;
     }
-    int coap_counter = 0; //counts coap rounds
+    int coap_counter = 0; // counts coap rounds
 
     while (1)
     {
@@ -167,13 +207,14 @@ int main()
             PRINTF(GREEN "Socket waiting for packet... " RESET "\n");
             continue;
         }
+        //check IP-adress and port of each incoming packet
         strcpy(client_ip_new, inet_ntoa(((struct sockaddr_in *)clientAddr_in)->sin_addr));
         client_port_new = ntohs(((struct sockaddr_in *)clientAddr_in)->sin_port);
         PRINTF(GREEN "client_ip: %s; client_ip_new: %s" RESET "\n", client_ip, client_ip_new);
         PRINTF(GREEN "client_port: %u; client_port_new: %u" RESET "\n", client_port, client_port_new);
         if (wolfSSL_dtls_cid_is_enabled(ssl) == WOLFSSL_SUCCESS)
         {
-
+            //if port or IP has changed, check CID and compare with stored CID
             if (strcmp(client_ip, client_ip_new) != 0 || client_port != client_port_new)
             {
                 PRINTF(GREEN "IP or port has changed! Checking ConnectionID" RESET "\n");
@@ -185,7 +226,6 @@ int main()
                 {
                     printf(GREEN "%02X" RESET, extractedCID[i]);
                 }
-                printf("\n");
                 PRINTF("\n");
                 unsigned char storedCID[CID_SIZE];
                 wolfSSL_dtls_cid_get_rx(ssl, storedCID, sizeof(storedCID));
@@ -197,6 +237,7 @@ int main()
                 printf("\n");
                 PRINTF("\n");
                 if (memcmp(extractedCID, storedCID, CID_SIZE) == 0)
+                //inject packet into DTLS session if the two CIDs are equal
                 {
                     PRINTF(GREEN "Extracted CID from received Packet and stored CID are equal" RESET "\n");
                     wolfSSL_inject(ssl, buffer, receivedSize);
@@ -221,11 +262,11 @@ int main()
         if (ret != WOLFSSL_SUCCESS)
         {
             err = wolfSSL_get_error(ssl, ret);
-            if (err == WOLFSSL_ERROR_ZERO_RETURN) {
-                PRINTF(GREEN "Got close notify; closing session..." RESET"\n");
+            if (err == WOLFSSL_ERROR_ZERO_RETURN)
+            {
+                PRINTF(GREEN "Got close notify; closing session..." RESET "\n");
                 goto cleanup;
             }
-
         }
         if ((buffer[0] & 0xC0) != 0x40)
         {
@@ -246,7 +287,7 @@ int main()
             printf("%02X ", (unsigned char)buffer[i]);
         }
         PRINTF("\n");
-        //Parse received CoAP message into usable structure
+        // Parse received CoAP message into usable structure
         coap_pdu_t *received_pdu = coap_pdu_init(0, 0, 0, COAP_MAX_PDU_SIZE);
         if (coap_pdu_parse(COAP_PROTO_UDP, (const uint8_t *)buffer, ret, received_pdu) == 0)
         {
@@ -289,13 +330,14 @@ int main()
         // Check if it’s a confirmable message (COAP_MESSAGE_CON)
         if (coap_pdu_get_type(received_pdu) == COAP_MESSAGE_CON)
         {
+            //construct CoAP message (can't use libcoap for that because of lack of CID handling)
             PRINTF(GREEN "It's a confirmable CoAP message" RESET "\n");
             uint8_t ack_buffer[COAP_MAX_PDU_SIZE]; // Buffer for constructing the acknowledgment
             size_t offset = 0;                     // Offset for constructing the buffer
 
             // Step 1: Set CoAP header
             ack_buffer[offset++] = 0x60 | (token_len & 0x0F); // Version = 1 (0b01), Type = ACK (0b10), Token length = 0
-            ack_buffer[offset++] = 0x44;                         // Code = 2.04 (Success changed)
+            ack_buffer[offset++] = 0x44;                      // Code = 2.04 (Success changed)
             ack_buffer[offset++] = (message_id >> 8) & 0xFF;  // Message ID (high byte)
             ack_buffer[offset++] = message_id & 0xFF;         // Message ID (low byte)
 
@@ -331,10 +373,11 @@ int main()
             PRINTF("Received non-confirmable or other CoAP message\n");
         }
         coap_delete_pdu(received_pdu);
-        if (++coap_counter >= 3) {
-	    change_proxyIP();
+        if (++coap_counter >= 3)
+        {
+            change_proxyIP();
             coap_counter = 0;
-	}
+        }
         continue;
 
     reset_session:
@@ -370,6 +413,7 @@ cleanup:
     return 0;
 }
 
+//used for adding timestamps to debug logs
 void CustomLoggingCallback(const int logLevel, const char *const logMessage)
 {
     struct timeval tv;
@@ -423,13 +467,17 @@ void show_supported_ciphers()
     }
     printf("Enabled Ciphers:\n%s\n", cipher_buffer);
 }
-
-void change_proxyIP(){
+//executes remote change_ip script on proxy
+void change_proxyIP()
+{
     const char *command = "ssh DTLSproxy.local './change_ip.sh' > /dev/null 2>&1";
     int ret = system(command);
-    if (ret == 0 || ret == 256) {
+    if (ret == 0 || ret == 256)
+    {
         PRINTF(GREEN "successfully changed proxy IP.\n" RESET);
-    } else {
+    }
+    else
+    {
         PRINTF(RED "proxy IP change didnt work; return code: %d\n" RESET, ret);
     }
     return;
