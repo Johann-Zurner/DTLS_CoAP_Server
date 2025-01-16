@@ -1,11 +1,11 @@
 /* Author: Johann Zürner
  * Date: January 16, 2025
  * Purpose: Part of a Bachelor's thesis project at Hochschule Bonn-Rhein-Sieg (HBRS) for testing Connection ID in DTLS
- * works together with a proxy that's placed in front of server and that can change a packets source IP
+ * works with a proxy that's placed in front of server and that can change a packet's source IP
  *
  * DTLS Server with CoAP and Connection ID
  * ----------------------------------
- * This program implements a DTLS server using WolfSSL that communicates with clients via the CoAP protocol. It includes
+ * This program starts a DTLS server using WolfSSL that communicates with one client via the CoAP protocol. It includes
  * features like Connection ID (CID), certificate-based or PSK authentication, and CoAP message handling.
  *
  * Key Features:
@@ -16,18 +16,18 @@
  * 2. **CoAP Message Processing:**
  *    - Parses incoming CoAP messages, including payload and tokens.
  *    - Sends CoAP acknowledgments for confirmable messages.
- *    - Demonstrates handling CoAP request-response cycles.
  *
- * 3. **Authentication Options:**
- *    - Certificate-based verification for secure communication.
- *    - Pre-Shared Key (PSK) authentication for simpler setups.
+ * 3. **Authentication:**
+ *    - Certificate-based.
+ *    - Pre-Shared Key (PSK) authentication for faster handshakes.
  *
  * 4. **Dynamic Proxy IP Management:**
- *    - Includes functionality to change the proxy IP via a remote shell command to simulate client IP changes.
+ *    - Includes calling a script on the proxy to change the proxy IP via a remote shell command to simulate client IP changes.
  *
  * Usage:
  * - Compile with WolfSSL and CoAP libraries.
- * - Configure the preprocessor macros (`USE_CID`, `CERTS`, `USE_DTLS_1_3`, etc.) to enable desired features.
+ * - Configure the preprocessor macros (`USE_CID`, `CERTS`, `USE_DTLS_1_3`, etc.) to enable desired features
+ * - and make sure they are set equally on client side.
  * - Ensure the certificate and key file paths are correct when using certificate-based authentication.
  *
  * Notes:
