@@ -10,7 +10,7 @@
  *
  * Key Features:
  * 1. **DTLS Server Functionality:**
- *    - Supports DTLS 1.2 and DTLS 1.3 (selectable via preprocessor macros on client side).
+ *    - Supports DTLS 1.2 and DTLS 1.3 (selectable via preprocessor macros).
  *    - Connection ID (CID) support for session continuity despite IP or port changes.
  *
  * 2. **CoAP Message Processing:**
@@ -46,28 +46,15 @@
 #include <coap3/coap.h>
 #include <coap3/coap_pdu.h>
 
-//#define USE_CID // Comment out to disable the use of Connection ID
+// #define USE_CID // Comment out to disable the use of Connection ID
+#define USE_CERTS // Comment out to use Pre-Shared Keys instead of Certficate Verfication
+// #define USE_DTLS_1_3 //Comment out to use DTLS 1.2 instead of 1.3
 #define SHOW_WOLFSSL_DEBUG // Comment out to remove timestamps from debug logs
 
 #define COAP_MAX_PDU_SIZE 128
-#define PSK_IDENTITY_128 "Client_identity_128_Bit"
-#define PSK_IDENTITY_256 "Client_identity_256_Bit"
-#define PSK_KEY_16 "\xdd\xbb\xba\x39\xda\xce\x95\xed\x12\x34\x56\x78\x90\xab\xcd\xef"
-#define PSK_KEY_LEN_16 16
-#define PSK_KEY_32 "\x7a\x1c\x9e\x45\x23\xb0\xdf\x82\x11\x6f\xa4\x39\x5c\x8d\x77\xea" \
-                "\x4b\x92\x0f\x6a\xd8\x35\xbc\x19\xfe\x63\x2e\xab\x50\xc7\x84\xdd"
-#define PSK_KEY_LEN_32 32
-
-#define USE_PSK_32  1   // set to 0 for 16-byte key
-
-#if USE_PSK_32
-    #define PSK_KEY      PSK_KEY_32
-    #define PSK_KEY_LEN  PSK_KEY_LEN_32
-#else
-    #define PSK_KEY      PSK_KEY_16
-    #define PSK_KEY_LEN  PSK_KEY_LEN_16
-#endif
-
+#define PSK_IDENTITY "Client_identity"
+#define PSK_KEY "\xdd\xbb\xba\x39\xda\xce\x95\xed\x12\x34\x56\x78\x90\xab\xcd\xef"
+#define PSK_KEY_LEN 16
 
 // to colorize debug output
 #ifdef NO_COLORS
@@ -83,10 +70,8 @@
 // set server port
 #define SERVER_PORT 2444
 #define BUFFER_SIZE 1024
-#define SERVER_KEY_ECDSA "certs/serverCert/key/server-ec-key.pem"
-#define SERVER_CERT_ECDSA "certs/serverCert/cert/server-cert-ce.pem"
-//#define SERVER_KEY_DILITHIUM "certs/serverCert/key/server-key-dilithium.key"
-//#define SERVER_CERT_DILITHIUM "certs/serverCert/cert/server-cert-dilithium.crt"
+#define SERVER_KEY "certs/serverCert/key/server-ec-key.pem"
+#define SERVER_CERT "certs/serverCert/cert/server-cert-ce.pem"
 #define ROOT_CA_DIRECTORY "certs/rootCAs/rootCerts"
 // Connection ID size maximum 2 Bytes in WolfSSL
 #define CID_SIZE 2
@@ -116,8 +101,11 @@ int main()
     unsigned char connectionID[2];
     WOLFSSL_CTX *ctx;
     WOLFSSL *ssl;
-    WOLFSSL_METHOD *method = wolfDTLS_method();
-
+#ifdef USE_DTLS_1_3
+    WOLFSSL_METHOD *method = wolfDTLSv1_3_server_method();
+#else
+    WOLFSSL_METHOD *method = wolfDTLSv1_2_server_method();
+#endif
     // setup socket
     sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     memset(&servAddr, 0, sizeof(servAddr));
@@ -143,74 +131,45 @@ int main()
 
     ctx = wolfSSL_CTX_new(method);
 
-//Load Certs
+#ifdef USE_CERTS
     ret = wolfSSL_CTX_load_verify_locations(ctx, NULL, ROOT_CA_DIRECTORY);
     if (ret == WOLFSSL_SUCCESS)
     {
-        PRINTF(GREEN "CA-certs load success" RESET "\n");
+        PRINTF(GREEN "CA-cert load success" RESET "\n");
     }
     else
     {
-        PRINTF(RED "CA-certs load fail. Error: %d" RESET "\n", ret);
+        PRINTF(RED "CA-cert fail. Error: %d" RESET "\n", ret);
         PRINTF(RED "Error message: %s" RESET "\n", wolfSSL_ERR_reason_error_string(ret));
     }
 
-    ret = wolfSSL_CTX_use_certificate_file(ctx, SERVER_CERT_ECDSA, WOLFSSL_FILETYPE_PEM);
+    ret = wolfSSL_CTX_use_certificate_file(ctx, SERVER_CERT, WOLFSSL_FILETYPE_PEM);
     if (ret == WOLFSSL_SUCCESS)
     {
-        PRINTF(GREEN "Server-cert-ecdsa load success" RESET "\n");
+        PRINTF(GREEN "Server-cert load success" RESET "\n");
     }
     else
     {
-        PRINTF(RED "Server-cert-ecdsa load fail. Error: %d" RESET "\n", ret);
+        PRINTF(RED "Server-cert fail. Error: %d" RESET "\n", ret);
     }
 
-    ret = wolfSSL_CTX_use_PrivateKey_file(ctx, SERVER_KEY_ECDSA, WOLFSSL_FILETYPE_PEM);
+    ret = wolfSSL_CTX_use_PrivateKey_file(ctx, SERVER_KEY, WOLFSSL_FILETYPE_PEM);
     if (ret == WOLFSSL_SUCCESS)
     {
-        PRINTF(GREEN "server-key-ecdsa load success" RESET "\n");
+        PRINTF(GREEN "Key load success" RESET "\n");
     }
     else
     {
-        PRINTF(RED "server-key-ecdsa load fail. Error: %d" RESET "\n", ret);
+        PRINTF(RED "Key fail. Error: %d" RESET "\n", ret);
     }
-/*
-    ret = wolfSSL_CTX_use_certificate_file(ctx, SERVER_CERT_DILITHIUM, WOLFSSL_FILETYPE_PEM);
-    if (ret == WOLFSSL_SUCCESS)
-    {
-        PRINTF(GREEN "Server-cert-dilithium load success" RESET "\n");
-    }
-    else
-    {
-        PRINTF(RED "Server-cert-dilithium load fail. Error: %d" RESET "\n", ret);
-    }
-
-    ret = wolfSSL_CTX_use_PrivateKey_file(ctx, SERVER_KEY_DILITHIUM, WOLFSSL_FILETYPE_PEM);
-    if (ret == WOLFSSL_SUCCESS)
-    {
-        PRINTF(GREEN "server-key-dilithium load success" RESET "\n");
-    }
-    else
-    {
-        PRINTF(RED "server-key-dilithium load fail. Error: %d" RESET "\n", ret);
-    }
-*/
     wolfSSL_CTX_set_verify(ctx, WOLFSSL_VERIFY_PEER, NULL);
-
-//    wolfSSL_CTX_use_psk_identity_hint(ctx, PSK_IDENTITY);
+#else
+    wolfSSL_CTX_use_psk_identity_hint(ctx, PSK_IDENTITY);
     wolfSSL_CTX_set_psk_server_callback(ctx, my_psk_server_callback);
+#endif
+    // wolfSSL_CTX_set_cipher_list(ctx, "PSK-AES128-GCM-SHA256"); //Force specific ciphers
 
     ssl = wolfSSL_new(ctx);
-//
-//    wolfSSL_UseKeyShare(ssl, WOLFSSL_ML_KEM_768);
-//    wolfSSL_UseKeyShare(ssl, WOLFSSL_X25519MLKEM768);
-  //  wolfSSL_UseKeyShare(ssl, WOLFSSL_SECP384R1MLKEM1024);
-   // wolfSSL_UseKeyShare(ssl, WOLFSSL_SECP521R1MLKEM1024);
-//     wolfSSL_UseKeyShare(ssl, WOLFSSL_SECP256R1MLKEM768);
-    // wolfSSL_UseSupportedCurve(ssl, WOLFSSL_ML_KEM_768);
-    // wolfSSL_UseKeyShare(ssl, WOLFSSL_ML_KEM_1024);
-
-//
 
 #ifdef USE_CID
     wolfSSL_RAND_bytes(connectionID, sizeof(connectionID));
@@ -491,17 +450,8 @@ void printf_with_timestamp(const char *format, ...)
 unsigned int my_psk_server_callback(WOLFSSL *ssl, const char *identity,
                                     unsigned char *key, unsigned int key_max_len)
 {
-    if (strcmp(identity, "Client_identity_128_Bit") == 0) {
-        if (key_max_len < PSK_KEY_LEN_16) return 0;
-        memcpy(key, PSK_KEY_16, PSK_KEY_LEN_16);
-        return PSK_KEY_LEN_16;
-    }
-    else if (strcmp(identity, "Client_identity_256_Bit") == 0) {
-        if (key_max_len < PSK_KEY_LEN_32) return 0;
-        memcpy(key, PSK_KEY_32, PSK_KEY_LEN_32);
-        return PSK_KEY_LEN_32;
-    }
-    return 0;
+    memcpy(key, PSK_KEY, PSK_KEY_LEN);
+    return PSK_KEY_LEN;
 }
 
 void show_supported_ciphers()
